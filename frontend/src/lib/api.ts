@@ -38,59 +38,59 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  login: (data: { email: string; password: string }) => api.post('/auth/login', data),
-  register: (data: any) => api.post('/auth/register', data),
-  refresh: (refreshToken: string) => api.post('/auth/refresh', { refreshToken }),
-  profile: () => api.get('/auth/profile'),
+  login: (data: { email: string; password: string }): Promise<any> => api.post('/auth/login', data),
+  register: (data: any): Promise<any> => api.post('/auth/register', data),
+  refresh: (refreshToken: string): Promise<any> => api.post('/auth/refresh', { refreshToken }),
+  profile: (): Promise<any> => api.get('/auth/profile'),
 };
 
 // Clients API
 export const clientsApi = {
-  list: (params?: any) => api.get('/clients', { params }),
-  get: (id: string) => api.get(`/clients/${id}`),
-  create: (data: any) => api.post('/clients', data),
-  update: (id: string, data: any) => api.patch(`/clients/${id}`, data),
-  delete: (id: string) => api.delete(`/clients/${id}`),
-  search: (q: string) => api.get('/clients/search', { params: { q } }),
+  list: (params?: any): Promise<any> => api.get('/clients', { params }),
+  get: (id: string): Promise<any> => api.get(`/clients/${id}`),
+  create: (data: any): Promise<any> => api.post('/clients', data),
+  update: (id: string, data: any): Promise<any> => api.patch(`/clients/${id}`, data),
+  delete: (id: string): Promise<any> => api.delete(`/clients/${id}`),
+  search: (q: string): Promise<any> => api.get('/clients/search', { params: { q } }),
 };
 
 // Countries API
 export const countriesApi = {
-  list: (params?: any) => api.get('/countries', { params }),
-  get: (id: string) => api.get(`/countries/${id}`),
+  list: (params?: any): Promise<any> => api.get('/countries', { params }),
+  get: (id: string): Promise<any> => api.get(`/countries/${id}`),
 };
 
 // Visa Applications API
 export const visaApi = {
-  list: (params?: any) => api.get('/visa-applications', { params }),
-  get: (id: string) => api.get(`/visa-applications/${id}`),
-  create: (data: any) => api.post('/visa-applications', data),
-  update: (id: string, data: any) => api.patch(`/visa-applications/${id}`, data),
-  updateStatus: (id: string, status: string, notes?: string) => 
+  list: (params?: any): Promise<any> => api.get('/visa-applications', { params }),
+  get: (id: string): Promise<any> => api.get(`/visa-applications/${id}`),
+  create: (data: any): Promise<any> => api.post('/visa-applications', data),
+  update: (id: string, data: any): Promise<any> => api.patch(`/visa-applications/${id}`, data),
+  updateStatus: (id: string, status: string, notes?: string): Promise<any> => 
     api.patch(`/visa-applications/${id}/status`, { status, reviewNotes: notes }),
-  statistics: () => api.get('/visa-applications/statistics'),
+  statistics: (): Promise<any> => api.get('/visa-applications/statistics'),
 };
 
 // Documents API
 export const documentsApi = {
-  list: (params?: any) => api.get('/documents', { params }),
-  upload: (formData: FormData) => api.post('/documents/upload', formData, {
+  list: (params?: any): Promise<any> => api.get('/documents', { params }),
+  upload: (formData: FormData): Promise<any> => api.post('/documents/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
-  verify: (id: string, status: string, notes?: string) => 
+  verify: (id: string, status: string, notes?: string): Promise<any> => 
     api.patch(`/documents/${id}/verify`, { status, notes }),
-  delete: (id: string) => api.delete(`/documents/${id}`),
+  delete: (id: string): Promise<any> => api.delete(`/documents/${id}`),
 };
 
 // OCR API
 export const ocrApi = {
-  passport: (filePath: string) => api.post('/ocr/passport', { filePath }),
-  hotel: (filePath: string) => api.post('/ocr/hotel', { filePath }),
-  flight: (filePath: string) => api.post('/ocr/flight', { filePath }),
+  passport: (filePath: string): Promise<any> => api.post('/ocr/passport', { filePath }),
+  hotel: (filePath: string): Promise<any> => api.post('/ocr/hotel', { filePath }),
+  flight: (filePath: string): Promise<any> => api.post('/ocr/flight', { filePath }),
 };
 
 // PDF API
 export const pdfApi = {
-  generate: (applicationId: string) => api.post(`/pdf/generate/${applicationId}`),
-  preview: (applicationId: string) => `${API_URL}/api/pdf/preview/${applicationId}`,
+  generate: (applicationId: string): Promise<any> => api.post(`/pdf/generate/${applicationId}`),
+  preview: (applicationId: string): string => `${API_URL}/api/pdf/preview/${applicationId}`,
 };
