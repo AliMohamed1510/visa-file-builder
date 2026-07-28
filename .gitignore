@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+
+# NestJS
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/passports/.gitkeep
+!backend/uploads/documents/.gitkeep
+!backend/uploads/visa-forms/.gitkeep
+!backend/uploads/exports/.gitkeep
+
+# Prisma
+backend/prisma/migrations/*
+!backend/prisma/migrations/.gitkeep

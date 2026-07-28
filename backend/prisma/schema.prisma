@@ -1,0 +1,447 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+}
+
+enum DocumentType {
+  PASSPORT
+  HOTEL_BOOKING
+  FLIGHT_BOOKING
+  HR_LETTER
+  COMMERCIAL_REGISTRY
+  TAX_CARD
+  BANK_STATEMENT
+  INSURANCE
+  PHOTO
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum VisaStatus {
+  DRAFT
+  PENDING_REVIEW
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ApplicationType {
+  TOURISM
+  BUSINESS
+  FAMILY_VISIT
+  MEDICAL
+  STUDENT
+  TRANSIT
+  OTHER
+}
+
+enum SchengenCountry {
+  AUSTRIA
+  BELGIUM
+  CZECH_REPUBLIC
+  DENMARK
+  ESTONIA
+  FINLAND
+  FRANCE
+  GERMANY
+  GREECE
+  HUNGARY
+  ICELAND
+  ITALY
+  LATVIA
+  LIECHTENSTEIN
+  LITHUANIA
+  LUXEMBOURG
+  MALTA
+  NETHERLANDS
+  NORWAY
+  POLAND
+  PORTUGAL
+  SLOVAKIA
+  SLOVENIA
+  SPAIN
+  SWEDEN
+  SWITZERLAND
+}
+
+// ==================== USER & AUTH ====================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  avatar    String?
+  role      UserRole @default(EMPLOYEE)
+  status    UserStatus @default(ACTIVE)
+
+  // Relations
+  officeId  String?
+  office    Office?  @relation(fields: [officeId], references: [id])
+
+  employee  Employee?
+
+  // Audit
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  // Relations
+  visaApplications VisaApplication[] @relation("CreatedBy")
+  clients          Client[]          @relation("ClientCreatedBy")
+  logs             SystemLog[]
+
+  @@index([email])
+  @@index([officeId])
+  @@index([role])
+  @@map("users")
+}
+
+// ==================== OFFICE ====================
+
+model Office {
+  id          String   @id @default(uuid())
+  name        String
+  nameAr      String?
+  address     String?
+  city        String?
+  country     String?
+  phone       String?
+  email       String?
+  website     String?
+  logo        String?
+  isActive    Boolean  @default(true)
+
+  // Relations
+  employees   Employee[]
+  users       User[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("offices")
+}
+
+// ==================== EMPLOYEE ====================
+
+model Employee {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  officeId    String
+  office      Office   @relation(fields: [officeId], references: [id])
+
+  position    String?
+  department  String?
+  hireDate    DateTime?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([officeId])
+  @@map("employees")
+}
+
+// ==================== CLIENT ====================
+
+model Client {
+  id              String   @id @default(uuid())
+
+  // Personal Info
+  firstName       String
+  lastName        String
+  firstNameAr     String?
+  lastNameAr      String?
+  email           String?
+  phone           String?
+  phone2          String?
+
+  // Passport Info
+  passportNumber  String?
+  passportIssueDate   DateTime?
+  passportExpiryDate  DateTime?
+  passportIssuePlace  String?
+  passportCountry     String?
+
+  // Personal Details
+  dateOfBirth     DateTime?
+  placeOfBirth    String?
+  nationality     String?
+  gender          Gender?
+  maritalStatus   MaritalStatus?
+
+  // Address
+  address         String?
+  city            String?
+  country         String?
+  zipCode         String?
+
+  // Work Info
+  occupation      String?
+  employerName    String?
+  employerAddress String?
+  employerPhone   String?
+
+  // Emergency Contact
+  emergencyName   String?
+  emergencyPhone  String?
+  emergencyRelation String?
+
+  // Relations
+  officeId        String?
+  office          Office?  @relation(fields: [officeId], references: [id])
+
+  createdById     String?
+  createdBy       User?    @relation("ClientCreatedBy", fields: [createdById], references: [id])
+
+  // Relations
+  documents       Document[]
+  visaApplications VisaApplication[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([passportNumber])
+  @@index([email])
+  @@index([officeId])
+  @@index([createdById])
+  @@map("clients")
+}
+
+// ==================== COUNTRY & VISA FORM ====================
+
+model Country {
+  id              String   @id @default(uuid())
+  name            String
+  nameAr          String?
+  code            String   @unique // ISO code
+  schengenCountry SchengenCountry?
+
+  // Form Configuration
+  formTemplate    Json?    // Dynamic form fields configuration
+  documentRequirements Json? // Required documents list
+
+  // Rules
+  validationRules Json?    // Field validation rules
+  fieldOrder      Json?    // Display order of fields
+
+  isActive        Boolean  @default(true)
+  isSchengen      Boolean  @default(false)
+
+  // Relations
+  visaApplications VisaApplication[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([code])
+  @@index([schengenCountry])
+  @@map("countries")
+}
+
+// ==================== VISA APPLICATION ====================
+
+model VisaApplication {
+  id              String   @id @default(uuid())
+
+  // Application Info
+  applicationNumber String @unique // Auto-generated: VISA-2024-XXXXX
+  applicationType ApplicationType @default(TOURISM)
+  status          VisaStatus @default(DRAFT)
+
+  // Travel Info
+  destinationCountryId String
+  destinationCountry   Country  @relation(fields: [destinationCountryId], references: [id])
+
+  entryType       String?  // Single, Multiple
+  durationOfStay  Int?     // Days
+
+  // Travel Dates
+  intendedDateOfEntry DateTime?
+  intendedDateOfExit  DateTime?
+
+  // Previous Visas
+  hasPreviousVisas    Boolean @default(false)
+  previousVisaDetails String?
+
+  // Financial Info
+  hasSponsor        Boolean @default(false)
+  sponsorName       String?
+  sponsorAddress    String?
+  sponsorPhone      String?
+
+  // Form Data (Dynamic based on country)
+  formData          Json?
+
+  // Review Data
+  reviewNotes       String?
+  reviewedAt        DateTime?
+  reviewedById      String?
+
+  // Relations
+  clientId          String
+  client            Client   @relation(fields: [clientId], references: [id])
+
+  createdById       String
+  createdBy         User     @relation("CreatedBy", fields: [createdById], references: [id])
+
+  documents         Document[]
+
+  // Generated Files
+  generatedPdf      String?  // Path to generated PDF
+  generatedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([applicationNumber])
+  @@index([clientId])
+  @@index([destinationCountryId])
+  @@index([status])
+  @@index([createdById])
+  @@map("visa_applications")
+}
+
+// ==================== DOCUMENT ====================
+
+model Document {
+  id              String   @id @default(uuid())
+
+  // File Info
+  fileName        String
+  originalName    String
+  mimeType        String
+  size            Int
+  path            String   // File path or URL
+
+  // Document Type
+  type            DocumentType
+  status          DocumentStatus @default(PENDING)
+
+  // OCR Data
+  ocrData         Json?    // Extracted data from OCR
+  ocrConfidence   Float?
+  ocrProcessedAt  DateTime?
+
+  // Verification
+  verifiedById    String?
+  verifiedAt      DateTime?
+  verificationNotes String?
+
+  // Relations
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+
+  visaApplicationId String?
+  visaApplication   VisaApplication? @relation(fields: [visaApplicationId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([visaApplicationId])
+  @@index([type])
+  @@index([status])
+  @@map("documents")
+}
+
+// ==================== SYSTEM LOG ====================
+
+model SystemLog {
+  id          String   @id @default(uuid())
+
+  level       String   // INFO, WARN, ERROR, DEBUG
+  message     String
+  context     String?  // Module/Service name
+  metadata    Json?    // Additional data
+
+  // User & Request
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  ipAddress   String?
+  userAgent   String?
+  requestPath String?
+  requestMethod String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([level])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([context])
+  @@map("system_logs")
+}
+
+// ==================== BACKUP ====================
+
+model Backup {
+  id          String   @id @default(uuid())
+
+  fileName    String
+  filePath    String
+  fileSize    Int
+  type        String   // FULL, INCREMENTAL
+  status      String   // SUCCESS, FAILED, PENDING
+
+  startedAt   DateTime
+  completedAt DateTime?
+  errorMessage String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("backups")
+}
